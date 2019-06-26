@@ -43,7 +43,10 @@ type Props = {
 };
 
 const Editor: any = React.lazy(() => import('./web_editor'));
-const storage = new ServerStorage('http://localhost:4000/api/website', 'jwtToken');
+const storage = new ServerStorage(
+  process.env.NODE_ENV !== 'development' ? '/api/website' : 'http://localhost:4000/api/website',
+  'jwtToken'
+);
 
 window.addEventListener('error', function(e) {
   const { error } = e;
