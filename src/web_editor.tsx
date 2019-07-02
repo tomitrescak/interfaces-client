@@ -11,8 +11,10 @@ import {
   editorCatalogue,
   editorEditorCatalogue,
   IProject,
-  IStorage
+  IStorage,
+  Context
 } from '@tomino/dynamic-form-semantic-ui';
+import { initUndoManager } from '@tomino/dynamic-form';
 
 const componentCatalogue = merge(combinedCatalogue, editorCatalogue);
 const componentEditorCatalogue = merge(combinedEditorCatalogue, editorEditorCatalogue);
@@ -33,6 +35,7 @@ const Editor: React.FC<Props> = ({ project, storage }) => {
 
   if (!context.project) {
     context.load(project);
+    context.undoManager = initUndoManager(context.project);
   }
   return (
     <FormEditor context={context} showTopMenu={true} allowSave={true} fileOperations={false} />

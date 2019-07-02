@@ -1,9 +1,12 @@
 import React, { Suspense } from 'react';
 
+import { Modal, Header, Icon } from 'semantic-ui-react';
+
 import * as adminHandlers from './handlers/admin_handlers';
+import { modalConfig } from './handlers/admin_handlers';
 
 import { Button } from 'semantic-ui-react';
-import { Observer } from 'mobx-react';
+import { Observer, observer } from 'mobx-react';
 
 import { FormView, merge, Context, ContextType, context } from '@tomino/dynamic-form-semantic-ui';
 
@@ -23,7 +26,7 @@ import { catalogue as appEditor } from './components/catalogue_editor';
 
 import { editorCatalogue } from '@tomino/dynamic-form-semantic-ui';
 
-import { FormModel } from '@tomino/dynamic-form';
+import { FormModel, initUndoManager } from '@tomino/dynamic-form';
 import { css } from 'emotion';
 import {
   ServerStorage,
@@ -31,6 +34,7 @@ import {
   EditorState,
   EditorContext
 } from '@tomino/dynamic-form-semantic-ui';
+import { observable } from 'mobx';
 
 const editButton = css`
   position: fixed;
@@ -65,6 +69,32 @@ window.addEventListener('error', function(e) {
   }
 });
 
+const Confirm: React.FC = observer(() => {
+  const onClose = React.useCallback(() => (modalConfig.isOpen = false), []);
+  return (
+    <Modal open={modalConfig.isOpen} onClose={onClose} size="small">
+      <Header icon="warning" content="Please confirm your action" />
+      <Modal.Content>
+        <h3>{modalConfig.text}</h3>
+      </Modal.Content>
+      <Modal.Actions>
+        <Button
+          color="red"
+          onClick={() => {
+            modalConfig.callBack();
+            onClose();
+          }}
+        >
+          <Icon name="checkmark" /> {modalConfig.confirmText}
+        </Button>
+        <Button onClick={onClose}>
+          <Icon name="ban" /> Cancel
+        </Button>
+      </Modal.Actions>
+    </Modal>
+  );
+});
+
 const App: React.FC = () => {
   const [isEditing, setEdit] = React.useState(window.location.href.indexOf('?editor') > 0);
   const [project, setProject] = React.useState<IProject>({});
@@ -96,7 +126,7 @@ const App: React.FC = () => {
     return <div />;
   }
 
-  const formModel = isEditing ? null : new FormModel(project.form!, project.schema!, {});
+  const formModel = isEditing ? null : new FormModel(project.form!, project.schema!, {}, true);
 
   const handlers = {
     ...adminHandlers
@@ -117,8 +147,12 @@ const App: React.FC = () => {
 
   const editorContext = new EditorState(editorComponentCatalogue, editorEditorCatalogue, handlers);
   const appContext: ContextType = context;
+
+  (appContext as any).undoManager = initUndoManager(formModel ? formModel.dataSet : ({} as any));
+
   return (
     <Context.Provider value={appContext}>
+      <Confirm />
       <Suspense fallback={<div>Loading Editor ...</div>}>
         {isEditing ? (
           <Editor project={project} storage={storage} />

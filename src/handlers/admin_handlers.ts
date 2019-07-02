@@ -1,8 +1,7 @@
 import { DataSet, Handler } from '@tomino/dynamic-form';
 import { formDatasetToJS } from '@tomino/dynamic-form-semantic-ui';
 import { buildDataSet } from '@tomino/dynamic-form';
-import { toJS } from 'mobx';
-import { undoManager } from '@tomino/dynamic-form';
+import { toJS, observable, action } from 'mobx';
 import gql from 'graphql-tag';
 
 type Data = {
@@ -11,6 +10,37 @@ type Data = {
 
 const empty = [{ text: 'None', value: '' }];
 const emptySchema = JSON.stringify({ type: 'object', properties: {} });
+
+type ModalProps = {
+  title?: string;
+  text?: string;
+  confirmText?: string;
+  callBack?: Function;
+};
+
+export const modalConfig = observable({
+  isOpen: false,
+  title: 'Please confirm your action',
+  text: '',
+  confirmText: 'Delete',
+  callBack: null
+});
+
+export const confirmAction = action((props: ModalProps) => {
+  if (props.text) {
+    modalConfig.text = props.text;
+  }
+  if (props.title) {
+    modalConfig.title = props.title;
+  }
+  if (props.confirmText) {
+    modalConfig.confirmText = props.confirmText;
+  }
+  if (props.callBack) {
+    modalConfig.callBack = props.callBack;
+  }
+  modalConfig.isOpen = true;
+});
 
 export const parseConfig: Handler = ({ owner, args }) => {
   const client = JSON.parse(args.config.config);
@@ -48,20 +78,32 @@ export const addLookup: Handler = ({ owner }) => {
   owner.addRow('config.lookups', { name: owner.getValue('newLookup') });
 };
 
-export const removeTable: Handler = ({ owner }) => {
-  owner.parent.removeRowData('tables', owner);
+export const removeTable: Handler = ({ owner, context }) => {
+  confirmAction({
+    text: 'Do you wish to delete this table?',
+    callBack: () => owner.parent.removeRowData('tables', owner)
+  });
 };
 
 export const removeQuery: Handler = ({ owner }) => {
-  owner.parent.removeRowData('queries', owner);
+  confirmAction({
+    text: 'Do you wish to delete this query?',
+    callBack: () => owner.parent.removeRowData('queries', owner)
+  });
 };
 
 export const removeView: Handler = ({ owner }) => {
-  owner.parent.removeRowData('views', owner);
+  confirmAction({
+    text: 'Do you wish to delete this view?',
+    callBack: () => owner.parent.removeRowData('views', owner)
+  });
 };
 
 export const removeLookup: Handler = ({ owner }) => {
-  owner.parent.removeRowData('lookups', owner);
+  confirmAction({
+    text: 'Do you wish to delete this lookup?',
+    callBack: () => owner.parent.removeRowData('lookups', owner)
+  });
 };
 
 export const parseSaveConfigVariables: Handler = ({ owner }) => {
@@ -117,6 +159,10 @@ export const listDefinitionByView: Handler = ({ owner }) => {
   return {};
 };
 
+export const isAdd: Handler = ({ owner, args }) => {
+  return Object.keys(owner).indexOf('newView') === -1;
+};
+
 export const detailDefinitionByView: Handler = ({ owner, props }) => {
   const { table, view } = findTableByView(owner);
   if (view) {
@@ -130,7 +176,7 @@ export const detailDefinitionByView: Handler = ({ owner, props }) => {
 
     const data = props.dataProps && props.dataProps.data ? props.dataProps.data.data : {};
     const schema = JSON.parse(table.schema);
-    const dataSet = buildDataSet(schema, data, true);
+    const dataSet = buildDataSet(schema, data);
 
     return {
       formElement,
@@ -300,12 +346,12 @@ export const resetData: Handler = ({ owner }) => {
   owner.reset();
 };
 
-export const undo: Handler = ({ owner }) => {
-  undoManager.undo();
+export const undo: Handler = ({ context }) => {
+  context.undoManager.undo();
 };
 
-export const redo: Handler = ({ owner }) => {
-  undoManager.redo();
+export const redo: Handler = ({ context }) => {
+  context.undoManager.redo();
 };
 
 export const saveData: Handler = ({ owner, props }) => {
@@ -332,8 +378,6 @@ export const deleteTable: Handler = ({ owner, args, context }) => {
   const alert = context.alert;
   const { table } = findTableByView(owner);
   const id = data[args.index][table.idName];
-
-  debugger;
 
   if (window.confirm('Do you wish to delete this record?')) {
     client
@@ -433,7 +477,7 @@ export const lookup: Handler = async ({ owner, args }) => {
     query: searchQuery,
     variables: {
       searchName: lookup,
-      searchString: value,
+      searchString: (value || '').toString(),
       searchByValue,
       limit: single ? 1 : limit || 10
     }
