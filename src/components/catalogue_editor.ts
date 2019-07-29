@@ -1,7 +1,8 @@
-import { EditorComponentCatalogue } from '@tomino/dynamic-form';
+import { EditorComponentCatalogue } from '@toryjs/form';
+
 import { DetailEditor } from './detail_link';
 
-export const catalogue: EditorComponentCatalogue = {
+export const catalogueEditor: EditorComponentCatalogue = {
   components: {
     DetailLink: DetailEditor
   },

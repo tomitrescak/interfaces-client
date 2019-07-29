@@ -1,6 +1,5 @@
-import { DataSet, Handler } from '@tomino/dynamic-form';
-import { formDatasetToJS } from '@tomino/dynamic-form-semantic-ui';
-import { buildDataSet } from '@tomino/dynamic-form';
+import { DataSet, Handler, buildDataSet } from '@toryjs/form';
+import { formDatasetToJS } from '@toryjs/ui';
 import { toJS, observable, action } from 'mobx';
 import gql from 'graphql-tag';
 
@@ -174,7 +173,7 @@ export const detailDefinitionByView: Handler = ({ owner, props }) => {
       formElement.elements = [...(formElement.elements || []), ...toJS(props.formElement.elements)];
     }
 
-    const data = props.dataProps && props.dataProps.data ? props.dataProps.data.data : {};
+    const data = props.dataProps && props.dataProps.first ? props.dataProps.first.data : {};
     const schema = JSON.parse(table.schema);
     const dataSet = buildDataSet(schema, data);
 
@@ -248,7 +247,10 @@ function findTableByView(owner: DataSet) {
   const views: any = owner.getValue('/config.views');
   const selectedViewName = owner.getValue('/view');
   const view = views.find((v: any) => v.title.toLowerCase() === selectedViewName);
-  return { view, table: findTable(owner, view.searchName) };
+  if (view) {
+    return { view, table: findTable(owner, view.searchName) };
+  }
+  return {};
 }
 
 function findTable(owner: DataSet, queryName: string) {
@@ -347,11 +349,11 @@ export const resetData: Handler = ({ owner }) => {
 };
 
 export const undo: Handler = ({ context }) => {
-  context.undoManager.undo();
+  context.editor.undoManager.undo();
 };
 
 export const redo: Handler = ({ context }) => {
-  context.undoManager.redo();
+  context.editor.undoManager.redo();
 };
 
 export const saveData: Handler = ({ owner, props }) => {
@@ -374,7 +376,7 @@ export const saveData: Handler = ({ owner, props }) => {
 export const deleteTable: Handler = ({ owner, args, context }) => {
   const view = owner.view;
   const data = toJS(args.data);
-  const client = context.app.client;
+  const client = context.providers.client;
   const alert = context.alert;
   const { table } = findTableByView(owner);
   const id = data[args.index][table.idName];
@@ -408,7 +410,7 @@ export const saveTable: Handler = ({ owner, props, args, context }) => {
 
   const view = owner.view;
   const data = toJS(args.data);
-  const client = context.app.client;
+  const client = context.providers.client;
   const alert = context.alert;
   const { table } = findTableByView(owner);
 
@@ -473,7 +475,7 @@ export const logout: Handler = ({ context }) => {
 
 export const lookup: Handler = async ({ owner, args }) => {
   const { value, lookup, single, limit, context, searchByValue } = args;
-  const result = await context.app.client.query({
+  const result = await context.providers.client.query({
     query: searchQuery,
     variables: {
       searchName: lookup,
@@ -483,4 +485,13 @@ export const lookup: Handler = async ({ owner, args }) => {
     }
   });
   return result.data.search || {};
+};
+
+export const initTable: Handler = ({ owner }) => {
+  owner.setValue('limit', 50);
+  owner.setValue('skip', 0);
+};
+
+export const bottomTable: Handler = ({ owner }) => {
+  owner.setValue('skip', owner.getValue('skip') + 50);
 };

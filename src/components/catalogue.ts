@@ -1,5 +1,6 @@
-import { FormComponentCatalogue } from '@tomino/dynamic-form';
 import { DetailLink } from './detail_link';
+
+import { FormComponentCatalogue } from '@toryjs/form';
 
 export const catalogue: FormComponentCatalogue = {
   components: {

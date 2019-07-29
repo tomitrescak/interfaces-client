@@ -1,9 +1,8 @@
 import React from 'react';
-import { FormComponentProps, EditorComponent } from '@tomino/dynamic-form';
+import { FormComponentProps, EditorComponent } from '@toryjs/form';
 import { Link } from 'react-router-dom';
 import { observer } from 'mobx-react';
-import { valueSource, getValue, Context, DynamicComponent } from '@tomino/dynamic-form-semantic-ui';
-import { propGroup, boundProp } from '@tomino/dynamic-form-semantic-ui';
+import { valueSource, getValue, Context, DynamicComponent, propGroup, boundProp } from '@toryjs/ui';
 
 type DetailProps = {
   value: string;
