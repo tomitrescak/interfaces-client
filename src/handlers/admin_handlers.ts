@@ -1,5 +1,5 @@
 import { DataSet, Handler, buildDataSet } from '@toryjs/form';
-import { formDatasetToJS } from '@toryjs/ui';
+import { formDatasetToJS, getValue } from '@toryjs/ui';
 import { toJS, observable, action } from 'mobx';
 import gql from 'graphql-tag';
 
@@ -494,4 +494,16 @@ export const initTable: Handler = ({ owner }) => {
 
 export const bottomTable: Handler = ({ owner }) => {
   owner.setValue('skip', owner.getValue('skip') + 50);
+};
+
+export const getBrowseProperties: Handler = ({ formElement, props }) => {
+  return {
+    name: formElement.props.name,
+    searchString: getValue(props, null, 'searchString'),
+    limit: formElement.props.limit
+  };
+};
+
+export const clearSearch: Handler = ({ owner, props }) => {
+  owner.setValue('browseSearch', '');
 };
