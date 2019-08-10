@@ -1,17 +1,28 @@
 import React from 'react';
 
 import { ToryEditableForm } from '@toryjs/editor';
+import { Context } from '@toryjs/ui';
+import { observer } from 'mobx-react';
 
 const Editor = React.lazy(() => import('./editor'));
 const Form = React.lazy(() => import('./form'));
 
-export const App: React.FC = () => {
+export const App: React.FC = observer(() => {
+  const context = React.useContext(Context);
   return (
     <React.Suspense fallback={<div>Loading Form ...</div>}>
-      <ToryEditableForm Editor={Editor} Form={Form} canEdit={true} />
+      <ToryEditableForm
+        Editor={Editor}
+        Form={Form}
+        canEdit={
+          context.auth.user &&
+          context.auth.user.roles &&
+          context.auth.user.roles.indexOf('admin') >= 0
+        }
+      />
     </React.Suspense>
   );
-};
+});
 
 export default App;
 

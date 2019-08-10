@@ -6,7 +6,7 @@ import { modalConfig } from './handlers/admin_handlers';
 
 import { observer } from 'mobx-react';
 
-import { ToryForm, ContextType, EditorContext } from '@toryjs/ui';
+import { ToryForm, EditorContext, Context } from '@toryjs/ui';
 import { componentCatalogue } from './config/component_catalogue';
 import { editorCatalogue } from './config/editor_catalogue';
 import { handlers } from './config/handlers';
@@ -41,22 +41,32 @@ const Confirm: React.FC = observer(() => {
   );
 });
 
-const context = new ContextType();
-context.editor = new EditorContext(componentCatalogue, editorCatalogue, handlers, [], themes.light);
+// const context = new ContextType();
 
-const Form: React.FC = props => (
-  <>
-    <Confirm />
-    <ToryForm
-      catalogue={componentCatalogue}
-      project={
-        process.env.NODE_ENV === 'production' ? require('./app/default/website.json') : undefined
-      }
-      storage={process.env.NODE_ENV === 'development' ? storage : undefined}
-      handlers={handlers as any}
-      context={context}
-    />
-  </>
-);
+const Form: React.FC = props => {
+  const context = React.useContext(Context);
+  context.editor = new EditorContext(
+    componentCatalogue,
+    editorCatalogue,
+    handlers,
+    [],
+    themes.light
+  );
+
+  return (
+    <>
+      <Confirm />
+      <ToryForm
+        catalogue={componentCatalogue}
+        project={
+          process.env.NODE_ENV === 'production' ? require('./app/default/website.json') : undefined
+        }
+        storage={process.env.NODE_ENV === 'development' ? storage : undefined}
+        handlers={handlers as any}
+        context={context}
+      />
+    </>
+  );
+};
 
 export default Form;

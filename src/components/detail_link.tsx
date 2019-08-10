@@ -22,7 +22,11 @@ export const DetailLink: React.FC<FormComponentProps<DetailProps>> = props => {
       control={Link}
       to={`/editor/${props.dataProps && props.dataProps.view}/${value}`}
     >
-      {value || <span>⚓️ Link</span>}
+      {value || (
+        <span role="img" aria-label="Link">
+          ⚓️ Link
+        </span>
+      )}
     </DynamicComponent>
   );
 };

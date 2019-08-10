@@ -1,5 +1,5 @@
-import { DataSet, Handler, buildDataSet } from '@toryjs/form';
-import { formDatasetToJS, getValue } from '@toryjs/ui';
+import { DataSet, Handler, buildDataSet, FormModel } from '@toryjs/form';
+import { formDatasetToJS, getValue, ContextType } from '@toryjs/ui';
 import { toJS, observable, action } from 'mobx';
 import gql from 'graphql-tag';
 
@@ -162,7 +162,7 @@ export const isAdd: Handler = ({ owner, args }) => {
   return Object.keys(owner).indexOf('newView') === -1;
 };
 
-export const detailDefinitionByView: Handler = ({ owner, props }) => {
+export const detailDefinitionByView: Handler<any, ContextType> = ({ owner, props, context }) => {
   const { table, view } = findTableByView(owner);
   if (view) {
     const definition = JSON.parse(view.form || '{}');
@@ -175,11 +175,18 @@ export const detailDefinitionByView: Handler = ({ owner, props }) => {
 
     const data = props.dataProps && props.dataProps.first ? props.dataProps.first.data : {};
     const schema = JSON.parse(table.schema);
-    const dataSet = buildDataSet(schema, data);
+    // const dataSet = buildDataSet(schema, data);
+
+    const form = new FormModel(formElement, schema, data);
+
+    form.formDefinition.props.readOnly =
+      !context.auth.user ||
+      !context.auth.user.roles ||
+      context.auth.user.roles.every(r => editorRoles.indexOf(r) === -1);
 
     return {
-      formElement,
-      owner: dataSet,
+      formElement: form,
+      owner: form.dataSet,
       extra: {
         table,
         view
@@ -374,7 +381,7 @@ export const saveData: Handler = ({ owner, props }) => {
 };
 
 export const deleteTable: Handler = ({ owner, args, context }) => {
-  const view = owner.view;
+  // const view = owner.view;
   const data = toJS(args.data);
   const client = context.providers.client;
   const alert = context.alert;
@@ -408,7 +415,7 @@ export const saveTable: Handler = ({ owner, props, args, context }) => {
   //   return null;
   // }
 
-  const view = owner.view;
+  // const view = owner.view;
   const data = toJS(args.data);
   const client = context.providers.client;
   const alert = context.alert;
@@ -506,4 +513,14 @@ export const getBrowseProperties: Handler = ({ formElement, props }) => {
 
 export const clearSearch: Handler = ({ owner, props }) => {
   owner.setValue('browseSearch', '');
+};
+
+const editorRoles = ['admin', 'editor'];
+
+export const isReadonlyForm: Handler<any, ContextType> = ({ context }) => {
+  return (
+    !context.auth.user ||
+    !context.auth.user.roles ||
+    context.auth.user.roles.every(r => editorRoles.indexOf(r) === -1)
+  );
 };
