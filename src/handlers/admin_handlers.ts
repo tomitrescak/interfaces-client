@@ -163,15 +163,11 @@ export const isAdd: Handler = ({ owner, args }) => {
 };
 
 export const detailDefinitionByView: Handler<any, ContextType> = ({ owner, props, context }) => {
+  // in the edit mode we return only the form controls from the editor
   const { table, view } = findTableByView(owner);
   if (view) {
     const definition = JSON.parse(view.form || '{}');
     const formElement = (definition.pages && definition.pages[0]) || {};
-
-    // append elements if there are any
-    if (props.formElement.elements && props.formElement.elements.length) {
-      formElement.elements = [...(formElement.elements || []), ...toJS(props.formElement.elements)];
-    }
 
     const data = props.dataProps && props.dataProps.first ? props.dataProps.first.data : {};
     const schema = JSON.parse(table.schema);
